@@ -1,6 +1,8 @@
-public class Main {
+import grammar.Grammar;
 
+public class Main {
     public static void main(String[] args) {
-        String filePath = "faIdentifier.txt";
+        String filePath = "g1.txt";
+        new Grammar(filePath);
     }
 }
