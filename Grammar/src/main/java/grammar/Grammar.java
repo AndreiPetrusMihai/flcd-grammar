@@ -10,12 +10,12 @@ public class Grammar {
 
     List<String> terminals;
     List<String> nonTerminals;
-    List<String> operators = new ArrayList<>(List.of("/","*","+","-","<=","==","!=",">=","="));
-    List<String> separators = new ArrayList<>(List.of("(",")","{","}",";","###"));
-    List<String> reservedWords = new ArrayList<>(List.of("array","if","else","while","for","read","write","int","char","string","float"));
+    List<String> operators = new ArrayList<>(List.of("/", "*", "+", "-", "<=", "==", "!=", ">=", "="));
+    List<String> separators = new ArrayList<>(List.of("(", ")", "{", "}", ";", "###"));
+    List<String> reservedWords = new ArrayList<>(List.of("array", "if", "else", "while", "for", "read", "write", "int", "char", "string", "float"));
 
 
-    HashMap<String, List<String>> productions = new HashMap<>();
+    HashMap<String, List<List<String>>> productions = new HashMap<>();
 
     String filePath;
 
@@ -33,27 +33,27 @@ public class Grammar {
         System.out.println("4.Productions for a non-terminal");
     }
 
-    private void printProductions(){
-        for(String nonTerminal : productions.keySet()){
-            List<String> particularProductions = productions.get(nonTerminal);
+    private void printProductions() {
+        for (String nonTerminal : productions.keySet()) {
+            List<List<String>> particularProductions = productions.get(nonTerminal);
             System.out.println("Non-Terminal: " + nonTerminal);
-            if(particularProductions != null){
-                for(String production : particularProductions){
-                    System.out.println(production);
+            if (particularProductions != null) {
+                for (List<String> production : particularProductions) {
+                    System.out.println(production.toString());
                 }
             }
         }
     }
 
-    private void askForAndPrintProductionsForTerminal(Scanner scanner){
+    private void askForAndPrintProductionsForTerminal(Scanner scanner) {
         System.out.println("Provide the non terminal we should check for: ");
         String userProduction = scanner.nextLine();
 
-        List<String> particularProductions = productions.get(userProduction);
+        List<List<String>> particularProductions = productions.get(userProduction);
 
-        if(particularProductions != null){
-            for(String production : particularProductions){
-                System.out.println(production);
+        if (particularProductions != null) {
+            for (List<String> production : particularProductions) {
+                System.out.println(production.toString());
             }
         }
     }
@@ -109,21 +109,15 @@ public class Grammar {
                 continue;
             }
             if (terminal.equals("operators")) {
-                for (int n = 0; n <= 9; n++) {
-                    unpackedTerminals.addAll(operators);
-                }
+                unpackedTerminals.addAll(operators);
                 continue;
             }
             if (terminal.equals("separators")) {
-                for (int n = 0; n <= 9; n++) {
-                    unpackedTerminals.addAll(separators);
-                }
+                unpackedTerminals.addAll(separators);
                 continue;
             }
-            if (terminal.equals("reserved")) {
-                for (int n = 0; n <= 9; n++) {
-                    unpackedTerminals.addAll(reservedWords);
-                }
+            if (terminal.equals("reservedWords")) {
+                unpackedTerminals.addAll(reservedWords);
                 continue;
             }
             unpackedTerminals.add(terminal);
@@ -152,27 +146,30 @@ public class Grammar {
                 String[] productionElements = production.split(":");
 
                 //Here we turn into a list what is before the ":", resulting in a list of not-terminals/terminals
-                String productionNonTerminals = productionElements[0];
-                String[] productionNonTerminalsList = productionNonTerminals.split("\\|");
+                String productionNonTerminals = productionElements[0].trim();
+                List<String> productionNonTerminalsList = Arrays.stream(productionNonTerminals.split("\\|")).map(String::trim).toList();
 
                 //Here we turn into a list what is after the ":", resulting in a list of productions
                 String productionResults = productionElements[1];
-                List<String> productionResultsList = List.of(productionResults.split("\\|"));
+                List<String> productionResultsList = Arrays.stream(productionResults.split("\\|")).map(String::trim).toList();
 
                 //We load the productions like this in case we have an ambiguous grammar.
                 //If the nonTerminal var starts with a lowercase letter or productionNonTerminalsList
                 //has a length other than one, we know for sure that we don't have a context-free grammar
-                for(String nonTerminal : productionNonTerminalsList){
-                    List<String> existingProductions = productions.get(nonTerminal);
-
-                    if(existingProductions!=null){
+                for (String nonTerminal : productionNonTerminalsList) {
+                    List<List<String>> existingProductions = productions.get(nonTerminal);
+                    //Here we discompose every production results in order to know the members
+                    //Ex a S b | b b A will result in the following: [[a,S,b],[b,b,A]]
+                    List<List<String>> processedProduction = productionResultsList.stream().map((prodRes) -> Arrays.stream(prodRes.split(" ")).toList().stream().map(String::trim).toList()).toList();
+                    if (existingProductions != null) {
                         //Merging the lists needs to be done like this because of the immutability.
-                        List<String> newProductionsList = new ArrayList<>();
+                        List<List<String>> newProductionsList = new ArrayList<>();
                         newProductionsList.addAll(existingProductions);
-                        newProductionsList.addAll(productionResultsList);
+
+                        newProductionsList.addAll(processedProduction);
                         productions.put(nonTerminal, newProductionsList);
                     } else {
-                        productions.put(nonTerminal, productionResultsList);
+                        productions.put(nonTerminal, processedProduction);
                     }
                 }
 
