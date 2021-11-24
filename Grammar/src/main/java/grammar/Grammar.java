@@ -10,6 +10,10 @@ public class Grammar {
 
     List<String> terminals;
     List<String> nonTerminals;
+    List<String> operators = new ArrayList<>(List.of("/","*","+","-","<=","==","!=",">=","="));
+    List<String> separators = new ArrayList<>(List.of("(",")","{","}",";","###"));
+    List<String> reservedWords = new ArrayList<>(List.of("array","if","else","while","for","read","write","int","char","string","float"));
+
 
     HashMap<String, List<String>> productions = new HashMap<>();
 
@@ -80,6 +84,53 @@ public class Grammar {
         }
     }
 
+    private void unpackAlphabet() {
+        //This will allow us to add a...z,A...Z,0...9 to the terminals
+        List<String> unpackedTerminals = new ArrayList();
+        for (String terminal : terminals) {
+            if (terminal.equals("a...z")) {
+                for (int c = 97; c <= 122; c++) {
+                    char ch = (char) c;
+                    unpackedTerminals.add(String.valueOf(ch));
+                }
+                continue;
+            }
+            if (terminal.equals("A...Z")) {
+                for (int c = 65; c <= 90; c++) {
+                    char ch = (char) c;
+                    unpackedTerminals.add(String.valueOf(ch));
+                }
+                continue;
+            }
+            if (terminal.equals("0...9")) {
+                for (int n = 0; n <= 9; n++) {
+                    unpackedTerminals.add(String.valueOf(n));
+                }
+                continue;
+            }
+            if (terminal.equals("operators")) {
+                for (int n = 0; n <= 9; n++) {
+                    unpackedTerminals.addAll(operators);
+                }
+                continue;
+            }
+            if (terminal.equals("separators")) {
+                for (int n = 0; n <= 9; n++) {
+                    unpackedTerminals.addAll(separators);
+                }
+                continue;
+            }
+            if (terminal.equals("reserved")) {
+                for (int n = 0; n <= 9; n++) {
+                    unpackedTerminals.addAll(reservedWords);
+                }
+                continue;
+            }
+            unpackedTerminals.add(terminal);
+        }
+        terminals = unpackedTerminals;
+    }
+
     private void init() {
         java.util.Scanner scanner;
 
@@ -87,11 +138,13 @@ public class Grammar {
         try {
             scanner = new java.util.Scanner(file);
 
-            String nonTerminalsLine = scanner.nextLine();
-            this.nonTerminals = Arrays.stream(nonTerminalsLine.split(",")).toList();
-
             String terminalsLine = scanner.nextLine();
             this.terminals = Arrays.stream(terminalsLine.split(",")).toList();
+
+            unpackAlphabet();
+
+            String nonTerminalsLine = scanner.nextLine();
+            this.nonTerminals = Arrays.stream(nonTerminalsLine.split(",")).toList();
 
             while (scanner.hasNextLine()) {
                 String production = scanner.nextLine();

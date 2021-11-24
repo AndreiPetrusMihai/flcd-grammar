@@ -1,5 +1,5 @@
-s,f
 a,b,c,d
+s,f
 letter: a...z
 s:A...Z|f
 s|f:0...9,a...z,A...Z|f

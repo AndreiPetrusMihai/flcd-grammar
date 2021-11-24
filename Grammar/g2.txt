@@ -1,0 +1,61 @@
+a...z,A...Z,0...9,_,.,operators,separators,reservedWords
+
+letter: 'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'|'i'|'j'|'k'|'l'|'m'|'n'|'o'|'p'|'q'|'r'|'s'|'t'|'u'|'v'|'w'|'x'|'y'|'z'
+digit: '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'
+nonZeroDigit: '1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'
+identifierWithNoConstraints: letter identifierWithNoConstraints | digit identifierWithNoConstraints | identifierWithNoConstraints '_' | letter | digit | '_'
+identifier: letter identifierWithNoConstraints | letter
+
+cIntegerWithNoConstraints: digit cIntegerWithNoConstraints | digit
+cInteger: nonZeroDigit cIntegerWithNoConstraints | digit
+
+cCharacter: letter | digit
+cString: cCharacter cString | cCharacter
+
+cFloat: cInteger | cInteger "." cIntegerWithNoConstraints
+number: cInteger | cFloat
+
+type: "int" | "float" | "string" | "char"
+arithmeticOperators: "*" | "/" | "+" | "-"
+relationOperators: "<" | "<=" | "==" | "!=" | ">=" | ">"
+mathExpression: number | mathExpression arithmeticOperators number
+stringExpression := cString | stringExpression "+" cString
+expression: mathExpression | stringExpression
+
+arrayDeclaration: "array" type "[" cInteger "]"
+simpleDeclaration: type identifier | arrayDeclaration
+declarationStmt: simpleDeclaration | declarationAssignment
+declarationAssignment: simpleDeclaration "=" expression
+
+condition: expression relationOperators expression | expression
+
+ioStmt: "read" "(" identifier ")" | "write" "(" identifier ")"
+
+compoundStatements: ifStmt | forStmt | whileStmt
+simpleStatements: assignStmt | ioStmt | declarationStmt
+
+stmt: simpleStatements ";" | compoundStatements
+
+stmtList: stmt stmtList | stmt
+
+assignStmt: identifier "=" expression
+ifStmt: "if" "(" condition ")" "{" stmtList "}" | "if" "(" condition ")" "{" stmtList "}" "else" "{" stmtList "}"
+forStmt: "for" "(" declarationAssignment ";" condition ";" assignStmt ")" "{" stmtList "}"
+
+whileStmt: "while" "(" condition ")" "{" stmtList "}"
+
+program: "###" stmtList "###"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
