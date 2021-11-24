@@ -9,26 +9,26 @@ cIntegerWithNoConstraints: digit cIntegerWithNoConstraints | eps
 cInteger: nonZeroDigit cIntegerWithNoConstraints | digit
 cCharacter: letter | digit
 cString: cCharacter cString | cCharacter
-cFloat: cInteger | cInteger "." cIntegerWithNoConstraints
+cFloat: cInteger | cInteger '.' cIntegerWithNoConstraints
 number: cInteger | cFloat
-type: "int" | "float" | "string" | "char"
-arithmeticOperators: "*" | "/" | "+" | "-"
-relationOperators: "<" | "<=" | "==" | "!=" | ">=" | ">"
+type: 'int' | 'float' | 'string' | 'char'
+arithmeticOperators: '*' | '/' | '+' | '-'
+relationOperators: '<' | '<=' | '==' | '!=' | '>=' | '>'
 mathExpression: number | mathExpression arithmeticOperators number
-stringExpression := cString | stringExpression "+" cString
+stringExpression : cString | stringExpression '+' cString
 expression: mathExpression | stringExpression
-arrayDeclaration: "array" type "[" cInteger "]"
+arrayDeclaration: 'array' type '[' cInteger ']'
 simpleDeclaration: type identifier | arrayDeclaration
 declarationStmt: simpleDeclaration | declarationAssignment
-declarationAssignment: simpleDeclaration "=" expression
+declarationAssignment: simpleDeclaration '=' expression
 condition: expression relationOperators expression | expression
-ioStmt: "read" "(" identifier ")" | "write" "(" identifier ")"
+ioStmt: 'read' '(' identifier ')' | 'write' '(' identifier ')'
 compoundStatements: ifStmt | forStmt | whileStmt
 simpleStatements: assignStmt | ioStmt | declarationStmt
-stmt: simpleStatements ";" | compoundStatements
+stmt: simpleStatements ';' | compoundStatements
 stmtList: stmt stmtList | stmt
-assignStmt: identifier "=" expression
-ifStmt: "if" "(" condition ")" "{" stmtList "}" | "if" "(" condition ")" "{" stmtList "}" "else" "{" stmtList "}"
-forStmt: "for" "(" declarationAssignment ";" condition ";" assignStmt ")" "{" stmtList "}"
-whileStmt: "while" "(" condition ")" "{" stmtList "}"
-program: "###" stmtList "###"
+assignStmt: identifier '=' expression
+ifStmt: 'if' '(' condition ')' '{' stmtList '}' | 'if' '(' condition ')' '{' stmtList '}' 'else' '{' stmtList '}'
+forStmt: 'for' '(' declarationAssignment ';' condition ';' assignStmt ')' '{' stmtList '}'
+whileStmt: 'while' '(' condition ')' '{' stmtList '}'
+program: '###' stmtList '###'

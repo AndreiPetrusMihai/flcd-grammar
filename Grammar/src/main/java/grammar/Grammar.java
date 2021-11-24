@@ -14,14 +14,18 @@ public class Grammar {
     List<String> separators = new ArrayList<>(List.of("(", ")", "{", "}", ";", "###"));
     List<String> reservedWords = new ArrayList<>(List.of("array", "if", "else", "while", "for", "read", "write", "int", "char", "string", "float"));
 
+    String EPS = "eps";
 
     HashMap<String, List<List<String>>> productions = new HashMap<>();
+
+    HashMap<String, List<List<String>>> firstTable = new HashMap<>();
 
     String filePath;
 
     public Grammar(String filePath) {
         this.filePath = filePath;
         init();
+        generateFIRST();
         start();
     }
 
@@ -31,6 +35,8 @@ public class Grammar {
         System.out.println("2.Set of non terminals");
         System.out.println("3.Set of productions");
         System.out.println("4.Productions for a non-terminal");
+        System.out.println("5.First iteration for non-terminals");
+
     }
 
     private void printProductions() {
@@ -43,6 +49,18 @@ public class Grammar {
                 }
             }
         }
+    }
+
+    private void askForIterationAndPrintFirstContent(Scanner scanner) {
+        int maxIteration = firstTable.get(nonTerminals.get(0)).size();
+        System.out.println("Provide the iteration we should get. It should be smaller than " + maxIteration + ":");
+        int iteration = Integer.parseInt(scanner.nextLine());
+
+        if (maxIteration <= iteration) {
+            System.out.println("Iteration is too big");
+            return;
+        }
+        printFIRSTIteration(iteration);
     }
 
     private void askForAndPrintProductionsForTerminal(Scanner scanner) {
@@ -77,6 +95,7 @@ public class Grammar {
                 case 2 -> System.out.println(this.nonTerminals.toString());
                 case 3 -> printProductions();
                 case 4 -> askForAndPrintProductionsForTerminal(scanner);
+                case 5 -> askForIterationAndPrintFirstContent(scanner);
                 default -> System.out.println("Option doesn't match a command.");
             }
             System.out.println();
@@ -177,6 +196,87 @@ public class Grammar {
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void initFirstTable() {
+        firstTable = new HashMap<>();
+        for (String nonTerminal : nonTerminals) {
+            firstTable.put(nonTerminal, new ArrayList<>());
+        }
+    }
+
+    private void initNewFirstIteration(int iterationNumber) {
+        for (String nonTerminal : nonTerminals) {
+            List<List<String>> currentList = firstTable.get(nonTerminal);
+            currentList.add(new ArrayList<>());
+        }
+    }
+
+
+    private void generateFIRST() {
+        initFirstTable();
+        boolean differencesFound = true;
+        int currentIteration = 0;
+
+        while (differencesFound) {
+            differencesFound = false;
+            initNewFirstIteration(currentIteration);
+            for (String nonTerminal : productions.keySet()) {
+
+                List<String> newFirstList = firstTable.get(nonTerminal).get(currentIteration);
+                if (currentIteration > 0) {
+                    newFirstList.addAll(new ArrayList<>(firstTable.get(nonTerminal)
+                            .get(currentIteration - 1)));
+                }
+
+                for (List<String> production : productions.get(nonTerminal)) {
+
+                    String firstProductionElement = production.get(0);
+
+                    //We init it with the last iteration values.
+
+                    if (firstProductionElement.charAt(0) == '\'') {
+                        //This means the production starts with a non-terminal.
+                        String strippedTerminal = firstProductionElement.substring(1, firstProductionElement.length() - 1);
+                        //Remove the ""
+                        if (!newFirstList.contains(strippedTerminal)) {
+                            //If it doesn't contain it, we don't add it.
+                            newFirstList.add(strippedTerminal);
+                            differencesFound = true;
+                        }
+                    } else {
+                        if (firstProductionElement.equals(EPS)) {
+                            if (!newFirstList.contains(EPS)) {
+                                //If it doesn't contain it, we don't add it.
+                                newFirstList.add(EPS);
+                                differencesFound = true;
+                            }
+                        } else {
+                            //This means the production starts with a terminal.
+                            if (currentIteration > 0) {
+                                for (String firstValue : firstTable.get(firstProductionElement).get(currentIteration - 1)) {
+                                    if (!newFirstList.contains(firstValue)) {
+                                        newFirstList.add(firstValue);
+                                        differencesFound = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            currentIteration++;
+        }
+    }
+
+    private void printFIRSTIteration(int iterationToPrint) {
+        for (String nonTerminal : nonTerminals) {
+            System.out.print(nonTerminal + ": {");
+            for (String firstValue : firstTable.get(nonTerminal).get(iterationToPrint)) {
+                System.out.print(" " + firstValue + " ");
+            }
+            System.out.println("}");
         }
     }
 }

@@ -1,5 +1,9 @@
-a,b,c,d
-s,f
-letter: a...z
-s:A...Z|f
-s|f:0...9,a...z,A...Z|f
+(,),int,+,*
+s,a,b,c
+s: a b
+a: '(' s ')'
+a: 'int' c
+b: '+' S
+b: eps
+c: '*' a
+c: eps
