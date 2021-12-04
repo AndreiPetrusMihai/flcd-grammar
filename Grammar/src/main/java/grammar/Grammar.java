@@ -20,6 +20,8 @@ public class Grammar {
 
     HashMap<String, List<List<String>>> firstTable = new HashMap<>();
 
+    HashMap<String,List<List<String>>> followTable = new HashMap<>();
+
     String filePath;
 
     public Grammar(String filePath) {
@@ -206,10 +208,53 @@ public class Grammar {
         }
     }
 
+    private void initFollowTable(){
+        followTable = new HashMap<>();
+        for(var key : this.firstTable.keySet())
+            followTable.put(key,new ArrayList<>());
+    }
+
+
     private void initNewFirstIteration(int iterationNumber) {
         for (String nonTerminal : nonTerminals) {
             List<List<String>> currentList = firstTable.get(nonTerminal);
             currentList.add(new ArrayList<>());
+        }
+    }
+    private void generateFOLLOW(){
+        try{
+            Scanner reader = new Scanner(new File("g1.txt"));
+            String line = reader.nextLine();
+            line = reader.nextLine();
+            while(reader.hasNextLine()){
+                line = reader.nextLine();
+                List<String> values = List.of(line.split(":"));
+                List<String> fileInput= List.of(values.get(1).split(","));
+                if(fileInput.size() == 1 ) {
+                    if (this.nonTerminals.contains(fileInput.get(0)))
+//                        this.followTable.get(fileInput.get(0)).add(this.firstTable.get(fileInput.get(0)))0
+                        this.followTable.put(fileInput.get(0), this.firstTable.get(values.get(0)));
+                    else {
+                        this.followTable.put(fileInput.get(0), List.of(values));
+                    }
+                }
+                else{
+                    for(int i = 1; i< fileInput.size(); i++){
+                        if(this.nonTerminals.contains(fileInput.get(i))){
+                            this.followTable.put(fileInput.get(i),this.firstTable.get(fileInput.get(i)));
+                        }
+                        else{
+                            if(this.nonTerminals.contains(fileInput.get(i-1))){
+                                this.followTable.put(fileInput.get(i-1),List.of(List.of(fileInput.get(0))));
+                            }
+                        }
+
+                    }
+                }
+
+            }
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
         }
     }
 
