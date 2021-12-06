@@ -22,11 +22,12 @@ public class Grammar {
 
     String filePath;
 
-    public Grammar(String filePath) {
+    public Grammar(String filePath, boolean interactiveMode) {
         this.filePath = filePath;
         init();
         generateFIRST();
-        start();
+        if(interactiveMode)
+            start();
     }
 
     private void printOptions() {
