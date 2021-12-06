@@ -26,7 +26,8 @@ public class Grammar {
         this.filePath = filePath;
         init();
         generateFIRST();
-        if(interactiveMode)
+        //generateLL1();
+        if (interactiveMode)
             start();
     }
 
@@ -279,5 +280,63 @@ public class Grammar {
             }
             System.out.println("}");
         }
+    }
+
+    private void initLL1Table() {
+        ll1Table = new HashMap<>();
+        for (String nonTerminal : nonTerminals) {
+            HashMap<String, List<List<String>>> terminalMap = new HashMap<>();
+            for (String terminal : terminals) {
+                terminalMap.put(terminal, new ArrayList<>());
+            }
+            terminalMap.put("$", new ArrayList<>());
+            ll1Table.put(nonTerminal, terminalMap);
+        }
+        for (String terminal : terminals) {
+            HashMap<String, List<List<String>>> terminalMap = new HashMap<>();
+            for (String subTerminal : terminals) {
+                terminalMap.put(subTerminal, new ArrayList<>());
+            }
+            terminalMap.put("$", new ArrayList<>());
+            ll1Table.put(terminal, terminalMap);
+        }
+        HashMap<String, List<List<String>>> terminalMap = new HashMap<>();
+        terminalMap.put("$", new ArrayList<>());
+        ll1Table.put("$", terminalMap);
+
+    }
+
+    private void generateLL1() {
+        initLL1Table();
+        //HashMap<String, List<List<String>>> productions;
+        for (String key : productions.keySet()) {
+            for (List<String> production : productions.get(key)) {
+                String firstElement = production.get(0);
+                if (firstElement.charAt(0) == '\'') {
+                    //This means it's starting with a terminal
+                    ll1Table.get(key).get(firstElement).add(production);
+                } else if (firstElement.equals("eps")) {
+                    //This means it's resulting in epsilon
+                       /* for(String value : lastFollowIteration.get(key)){
+                            //If the value is epsilon, we add it to the dollar column
+                            if(value.equals("eps")){
+                                ll1Table.get(key).get("$").add(production);
+                            } else {
+                                ll1Table.get(key).get(value).add(production);
+                            }
+                        }*/
+                } else {
+                    //This means it's starting with a non-terminal
+                    for (String value : lastFirstIteration.get(firstElement)) {
+                        ll1Table.get(key).get(value).add(production);
+                    }
+                }
+            }
+        }
+    }
+
+
+    public void parseSequence(List<String> sequence){
+
     }
 }

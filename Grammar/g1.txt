@@ -1,6 +1,6 @@
 (,),int,+,*
 s,a,b,c
-s: a b
+s: b a
 a: '(' s ')'
 a: 'int' c
 b: '+' s
