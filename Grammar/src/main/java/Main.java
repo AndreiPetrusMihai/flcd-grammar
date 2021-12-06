@@ -2,7 +2,7 @@ import grammar.Grammar;
 
 public class Main {
     public static void main(String[] args) {
-        String filePath = "g2CF.txt";
-        new Grammar(filePath);
+        String filePath = "g1.txt";
+        new Grammar(filePath, true);
     }
 }
