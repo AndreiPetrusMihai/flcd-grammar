@@ -3,7 +3,7 @@ s,a,b,c
 s: a b
 a: '(' s ')'
 a: 'int' c
-b: '+' S
+b: '+' s
 b: eps
 c: '*' a
 c: eps
