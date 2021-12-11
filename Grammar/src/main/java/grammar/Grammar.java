@@ -19,6 +19,11 @@ public class Grammar {
     HashMap<String, List<List<String>>> productions = new HashMap<>();
 
     HashMap<String, List<List<String>>> firstTable = new HashMap<>();
+    HashMap<String, List<String>> lastFirstIteration = new HashMap<>();
+
+
+    HashMap<String, HashMap<String, List<List<String>>>> ll1Table = new HashMap<>();
+
 
     String filePath;
 
@@ -208,13 +213,19 @@ public class Grammar {
         }
     }
 
-    private void initNewFirstIteration(int iterationNumber) {
+    private void initNewFirstIteration() {
         for (String nonTerminal : nonTerminals) {
             List<List<String>> currentList = firstTable.get(nonTerminal);
             currentList.add(new ArrayList<>());
         }
     }
 
+    private void saveLastFIRSTIteration() {
+        int iterationCount = firstTable.get(nonTerminals.get(0)).size();
+        for (String key : firstTable.keySet()) {
+            lastFirstIteration.put(key, new ArrayList<>(firstTable.get(key).get(iterationCount - 1)));
+        }
+    }
 
     private void generateFIRST() {
         initFirstTable();
@@ -223,10 +234,12 @@ public class Grammar {
 
         while (differencesFound) {
             differencesFound = false;
-            initNewFirstIteration(currentIteration);
+            initNewFirstIteration();
             for (String nonTerminal : productions.keySet()) {
 
                 List<String> newFirstList = firstTable.get(nonTerminal).get(currentIteration);
+
+                //We initialize it with the last iteration values.
                 if (currentIteration > 0) {
                     newFirstList.addAll(new ArrayList<>(firstTable.get(nonTerminal)
                             .get(currentIteration - 1)));
@@ -236,12 +249,10 @@ public class Grammar {
 
                     String firstProductionElement = production.get(0);
 
-                    //We init it with the last iteration values.
-
                     if (firstProductionElement.charAt(0) == '\'') {
                         //This means the production starts with a non-terminal.
                         String strippedTerminal = firstProductionElement.substring(1, firstProductionElement.length() - 1);
-                        //Remove the ""
+                        //Remove the ''
                         if (!newFirstList.contains(strippedTerminal)) {
                             //If it doesn't contain it, we don't add it.
                             newFirstList.add(strippedTerminal);
@@ -250,17 +261,29 @@ public class Grammar {
                     } else {
                         if (firstProductionElement.equals(EPS)) {
                             if (!newFirstList.contains(EPS)) {
-                                //If it doesn't contain it, we don't add it.
+                                //If it contains it, we don't add it.
                                 newFirstList.add(EPS);
                                 differencesFound = true;
                             }
                         } else {
                             //This means the production starts with a terminal.
                             if (currentIteration > 0) {
-                                for (String firstValue : firstTable.get(firstProductionElement).get(currentIteration - 1)) {
-                                    if (!newFirstList.contains(firstValue)) {
-                                        newFirstList.add(firstValue);
-                                        differencesFound = true;
+                                int productionElementIndex = 0;
+                                boolean keepGoing = true;
+                                String productionElement;
+                                while(productionElementIndex < production.size() && keepGoing){
+                                    productionElement = production.get(productionElementIndex);
+
+                                    keepGoing = false;
+                                    for (String firstValue : firstTable.get(productionElement).get(currentIteration - 1)) {
+                                        if (!newFirstList.contains(firstValue)) {
+                                            newFirstList.add(firstValue);
+                                            differencesFound = true;
+                                        }
+                                        if(firstValue.equals("eps")){
+                                            keepGoing = true;
+                                            productionElementIndex++;
+                                        }
                                     }
                                 }
                             }
@@ -270,6 +293,8 @@ public class Grammar {
             }
             currentIteration++;
         }
+
+        saveLastFIRSTIteration();
     }
 
     private void printFIRSTIteration(int iterationToPrint) {
