@@ -28,6 +28,7 @@ public class Grammar {
         this.filePath = filePath;
         init();
         generateFIRST();
+        generateFOLLOW();
         start();
     }
 
@@ -210,8 +211,9 @@ public class Grammar {
 
     private void initFollowTable(){
         followTable = new HashMap<>();
-        for(var key : this.firstTable.keySet())
-            followTable.put(key,new ArrayList<>());
+        for(var key : this.firstTable.keySet()) {
+            followTable.put(key, new ArrayList<>());
+        }
     }
 
 
@@ -223,7 +225,8 @@ public class Grammar {
     }
     private void generateFOLLOW(){
         try{
-            Scanner reader = new Scanner(new File("g1.txt"));
+            this.initFollowTable();
+            Scanner reader = new Scanner(new File(this.filePath));
             String line = reader.nextLine();
             line = reader.nextLine();
             while(reader.hasNextLine()){
@@ -256,7 +259,88 @@ public class Grammar {
         }catch(FileNotFoundException e){
             e.printStackTrace();
         }
+        System.out.println(this.followTable.toString());
     }
+//    private void generateFOLLOW(){
+//        initFollowTable();
+////        try{
+////            for(var p : this.productions.values())
+////                System.out.println(p);
+//////            Scanner reader = new Scanner(new File(this.filePath));
+//////            String line;
+//////            line = reader.nextLine();
+//////            line = reader.nextLine();
+//////            while( reader.hasNextLine()) {
+//////                line = reader.nextLine();
+////////                System.out.println(line);
+//////                var initialSplit = line.split(":");
+//////                System.out.println(initialSplit[1]);
+//////                var secondSplit = initialSplit[1].split("\\|");
+////////                System.out.println(Arrays.toString(secondSplit));
+//////                for (var value : secondSplit) {
+////////                    System.out.println(Arrays.toString(value.split(" ")));
+//////                    var x = (value.split(" "));
+////////                    for (var value2 : (value.split(" "))){
+//////                        int i = 0;
+////////                        System.out.println(value2);
+//////                    if (!(value.charAt(0) == '\'')) {
+////////                        System.out.println(value);
+//////                        int j = i;
+//////                        boolean checker = false;
+//////                        while (this.nonTerminals.contains(secondSplit[j])) {
+//////                            j++;
+//////                            if (!this.nonTerminals.contains(secondSplit[j]))
+//////                                checker = true;
+//////                        }
+//////                        if (checker)
+//////                            this.followTable.get(secondSplit[j - 1]).get(0).add(secondSplit[j]);
+//////
+//////
+//////                    }
+//////                }
+//////            }
+//////            }
+////        }catch(Exception e){
+////            e.printStackTrace();
+////        }
+////        System.out.println(this.followTable);
+//        try{
+//            Scanner reader = new Scanner(new File(this.filePath));
+//            String line = reader.nextLine();
+//            line = reader.nextLine();
+//            while(reader.hasNextLine()){
+//                line = reader.nextLine();
+//                List<String> values = List.of(line.split(":"));
+//                List<String> fileInput= List.of(values.get(1).split(","));
+//                if(fileInput.size() == 1 ) {
+//                    if (this.nonTerminals.contains(fileInput.get(0)))
+////                        this.followTable.get(fileInput.get(0)).add(this.firstTable.get(fileInput.get(0)))0
+//                        this.followTable.put(fileInput.get(0), this.firstTable.get(values.get(0)));
+//                    else {
+//                        if(this.firstTable.containsKey(fileInput.get(0)))
+//                        this.followTable.put(fileInput.get(0), List.of(values));
+//                    }
+//                }
+//                else{
+//                    for(int i = 1; i< fileInput.size(); i++){
+//                        if(this.nonTerminals.contains(fileInput.get(i))){
+//                            this.followTable.put(fileInput.get(i),this.firstTable.get(fileInput.get(i)));
+//                        }
+//                        else{
+//                            if(this.nonTerminals.contains(fileInput.get(i-1))){
+//                                this.followTable.put(fileInput.get(i-1),List.of(List.of(fileInput.get(0))));
+//                            }
+//                        }
+//
+//                    }
+//                }
+//
+//            }
+//        }catch(FileNotFoundException e){
+//            e.printStackTrace();
+//        }
+//        System.out.println(this.followTable.toString());
+//    }
 
 
     private void generateFIRST() {
