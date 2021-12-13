@@ -14,6 +14,7 @@ public class Grammar {
     List<String> separators = new ArrayList<>(List.of("(", ")", "{", "}", ";", "###"));
     List<String> reservedWords = new ArrayList<>(List.of("array", "if", "else", "while", "for", "read", "write", "int", "char", "string", "float"));
 
+
     String EPS = "eps";
 
     LinkedHashMap<String, List<Pair<Integer,List<String>>>> productions = new LinkedHashMap<>();
@@ -85,6 +86,24 @@ public class Grammar {
             }
         }
     }
+
+    private void unwind(ArrayList<Integer> _productions){
+        for(var p : this.productions.keySet())
+            for(var x : this.productions.get(p)){
+                for(var prodNumber : _productions)
+                    if(Objects.equals(x.getKey(), prodNumber)){
+                        var data = x.getValue();
+                        for (int i = 0; i < data.size(); i++) {
+                            if(this.nonTerminals.contains(data.get(i))){
+                               x.getValue().set(i, x.getValue().get(prodNumber));
+                        }
+
+                        }
+                    }
+            }
+    }
+
+
 
     private void start() {
         Scanner scanner = new Scanner(System.in);
@@ -297,6 +316,9 @@ public class Grammar {
             System.out.println(x + "->" +followTable.get(x));
     }
 
+    private void LL1Parsing(String productionString){
+
+    }
     private void generateFIRST() {
         initFirstTable();
         boolean differencesFound = true;
