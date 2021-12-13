@@ -16,13 +16,13 @@ public class Grammar {
 
     String EPS = "eps";
 
-    LinkedHashMap<String, List<Pair<Integer,List<String>>>> productions = new LinkedHashMap<>();
+    LinkedHashMap<String, List<Pair<Integer, List<String>>>> productions = new LinkedHashMap<>();
 
     LinkedHashMap<String, List<List<String>>> firstTable = new LinkedHashMap<>();
     LinkedHashMap<String, List<String>> lastFirstIteration = new LinkedHashMap<>();
 
-    LinkedHashMap<String,List<String>> lastFollowIteration = new LinkedHashMap<>();
-    LinkedHashMap<String, LinkedHashMap<String, List<Pair<Integer,List<String>>>>> ll1Table = new LinkedHashMap<>();
+    LinkedHashMap<String, List<String>> lastFollowIteration = new LinkedHashMap<>();
+    LinkedHashMap<String, LinkedHashMap<String, List<Pair<Integer, List<String>>>>> ll1Table = new LinkedHashMap<>();
 
 
     String filePath;
@@ -49,10 +49,10 @@ public class Grammar {
 
     private void printProductions() {
         for (String nonTerminal : productions.keySet()) {
-            List<Pair<Integer,List<String>>> particularProductions = productions.get(nonTerminal);
+            List<Pair<Integer, List<String>>> particularProductions = productions.get(nonTerminal);
             System.out.println("Non-Terminal: " + nonTerminal);
             if (particularProductions != null) {
-                for (Pair<Integer,List<String>> production : particularProductions) {
+                for (Pair<Integer, List<String>> production : particularProductions) {
                     System.out.println(production.getValue());
                 }
             }
@@ -75,10 +75,10 @@ public class Grammar {
         System.out.println("Provide the non terminal we should check for: ");
         String userProduction = scanner.nextLine();
 
-        List<Pair<Integer,List<String>>> particularProductions = productions.get(userProduction);
+        List<Pair<Integer, List<String>>> particularProductions = productions.get(userProduction);
 
         if (particularProductions != null) {
-            for (Pair<Integer,List<String>> production : particularProductions) {
+            for (Pair<Integer, List<String>> production : particularProductions) {
                 System.out.println(production.getValue().toString());
             }
         }
@@ -113,13 +113,13 @@ public class Grammar {
         }
     }
 
-    private void printLL1Table(){
-        for(String k1: ll1Table.keySet()){
-            for(String k2: ll1Table.get(k1).keySet()){
-                List<Pair<Integer,List<String>>> tableValues = ll1Table.get(k1).get(k2);
-                if(tableValues.size() > 0){
+    private void printLL1Table() {
+        for (String k1 : ll1Table.keySet()) {
+            for (String k2 : ll1Table.get(k1).keySet()) {
+                List<Pair<Integer, List<String>>> tableValues = ll1Table.get(k1).get(k2);
+                if (tableValues.size() > 0) {
                     System.out.println(k1 + " " + k2 + ":");
-                    for(Pair<Integer,List<String>> entry : tableValues){
+                    for (Pair<Integer, List<String>> entry : tableValues) {
                         System.out.println(entry.getKey() + ": " + entry.getValue().toString());
                     }
                 }
@@ -201,14 +201,14 @@ public class Grammar {
                 //has a length other than one, we know for sure that we don't have a context-free grammar
                 for (String nonTerminal : productionNonTerminalsList) {
                     productionIndex++;
-                    List<Pair<Integer,List<String>>> existingProductions = productions.get(nonTerminal);
+                    List<Pair<Integer, List<String>>> existingProductions = productions.get(nonTerminal);
                     //Here we discompose every production results in order to know the members
                     //Ex a S b | b b A will result in the following: [[a,S,b],[b,b,A]]
                     Integer finalProductionIndex = productionIndex;
-                    List<Pair<Integer,List<String>>> processedProduction = productionResultsList.stream().map((prodRes) -> new Pair<>(finalProductionIndex,Arrays.stream(prodRes.split(" ")).toList().stream().map(String::trim).toList())).toList();
+                    List<Pair<Integer, List<String>>> processedProduction = productionResultsList.stream().map((prodRes) -> new Pair<>(finalProductionIndex, Arrays.stream(prodRes.split(" ")).toList().stream().map(String::trim).toList())).toList();
                     if (existingProductions != null) {
                         //Merging the lists needs to be done like this because of the immutability.
-                        List<Pair<Integer,List<String>>> newProductionsList = new ArrayList<>();
+                        List<Pair<Integer, List<String>>> newProductionsList = new ArrayList<>();
                         newProductionsList.addAll(existingProductions);
 
                         newProductionsList.addAll(processedProduction);
@@ -264,7 +264,7 @@ public class Grammar {
                             .get(currentIteration - 1)));
                 }
 
-                for (Pair<Integer,List<String>> production : productions.get(nonTerminal)) {
+                for (Pair<Integer, List<String>> production : productions.get(nonTerminal)) {
 
                     String firstProductionElement = production.getValue().get(0);
 
@@ -290,7 +290,7 @@ public class Grammar {
                                 int productionElementIndex = 0;
                                 boolean keepGoing = true;
                                 String productionElement;
-                                while(productionElementIndex < production.getValue().size() && keepGoing){
+                                while (productionElementIndex < production.getValue().size() && keepGoing) {
                                     productionElement = production.getValue().get(productionElementIndex);
 
                                     keepGoing = false;
@@ -299,7 +299,7 @@ public class Grammar {
                                             newFirstList.add(firstValue);
                                             differencesFound = true;
                                         }
-                                        if(firstValue.equals("eps")){
+                                        if (firstValue.equals("eps")) {
                                             keepGoing = true;
                                             productionElementIndex++;
                                         }
@@ -317,8 +317,8 @@ public class Grammar {
         generateMockFollow();
     }
 
-    private void generateMockFollow(){
-        for(String nonTerminal : nonTerminals){
+    private void generateMockFollow() {
+        for (String nonTerminal : nonTerminals) {
             ArrayList<String> values = new ArrayList<>();
             switch (nonTerminal) {
                 case "s", "b" -> {
@@ -348,7 +348,7 @@ public class Grammar {
     private void initLL1Table() {
         ll1Table = new LinkedHashMap<>();
         for (String nonTerminal : nonTerminals) {
-            LinkedHashMap<String, List<Pair<Integer,List<String>>>> terminalMap = new LinkedHashMap<>();
+            LinkedHashMap<String, List<Pair<Integer, List<String>>>> terminalMap = new LinkedHashMap<>();
             for (String terminal : terminals) {
                 terminalMap.put(terminal, new ArrayList<>());
             }
@@ -356,37 +356,37 @@ public class Grammar {
             ll1Table.put(nonTerminal, terminalMap);
         }
         for (String terminal : terminals) {
-            LinkedHashMap<String, List<Pair<Integer,List<String>>>> terminalMap = new LinkedHashMap<>();
+            LinkedHashMap<String, List<Pair<Integer, List<String>>>> terminalMap = new LinkedHashMap<>();
             for (String subTerminal : terminals) {
                 terminalMap.put(subTerminal, new ArrayList<>());
             }
             terminalMap.put("$", new ArrayList<>());
             ll1Table.put(terminal, terminalMap);
         }
-        LinkedHashMap<String, List<Pair<Integer,List<String>>>> terminalMap = new LinkedHashMap<>();
+        LinkedHashMap<String, List<Pair<Integer, List<String>>>> terminalMap = new LinkedHashMap<>();
         terminalMap.put("$", new ArrayList<>());
         ll1Table.put("$", terminalMap);
     }
 
     private void generateLL1() {
         initLL1Table();
-        System.out.println(ll1Table.keySet().toString());
+        System.out.println(ll1Table.keySet());
 
         for (String key : productions.keySet()) {
-            for (Pair<Integer,List<String>> production : productions.get(key)) {
+            for (Pair<Integer, List<String>> production : productions.get(key)) {
                 String firstElement = production.getValue().get(0);
                 if (firstElement.charAt(0) == '\'') {
                     //This means it's starting with a terminal. We also strip them of ''.
-                    ll1Table.get(key).get(firstElement.substring(1,firstElement.length()-1)).add(production);
+                    ll1Table.get(key).get(firstElement.substring(1, firstElement.length() - 1)).add(production);
                 } else if (firstElement.equals("eps")) {
                     //This means it's resulting in epsilon
-                    for(String value : lastFollowIteration.get(key)){
-                            //If the value is epsilon, we add it to the dollar column
-                            if(value.equals("eps")){
-                                ll1Table.get(key).get("$").add(production);
-                            } else {
-                                ll1Table.get(key).get(value).add(production);
-                            }
+                    for (String value : lastFollowIteration.get(key)) {
+                        //If the value is epsilon, we add it to the dollar column
+                        if (value.equals("eps")) {
+                            ll1Table.get(key).get("$").add(production);
+                        } else {
+                            ll1Table.get(key).get(value).add(production);
+                        }
                     }
                 } else {
                     //This means it's starting with a non-terminal
@@ -399,7 +399,50 @@ public class Grammar {
     }
 
 
-    public void parseSequence(List<String> sequence){
+    private boolean isTerminal(String candidate) {
+        return terminals.stream().anyMatch((s) -> s.equals(candidate));
+    }
 
+
+    public List<Integer> parseSequence(List<String> sequence, Stack<String> startStack) throws Exception {
+
+        sequence.add("$");
+        Stack<String> parsingStack = startStack;
+        List<Integer> output = new ArrayList<>();
+
+        while (sequence.size() > 0) {
+            System.out.println("Seq:" + sequence);
+            System.out.println("Stack:" + parsingStack);
+            String firstSeqElement = sequence.get(0);
+            String stackTopElement = parsingStack.pop();
+
+            if (stackTopElement.equals(EPS))
+                continue;
+
+            if (firstSeqElement.equals("$") && stackTopElement.equals("$"))
+                return output;
+
+            if (stackTopElement.charAt(0) == '\'') {
+                //We have a terminal on the parsing stack;
+                if (stackTopElement.substring(1, stackTopElement.length() - 1).equals(firstSeqElement)) {
+                    sequence.remove(0);
+                    continue;
+                }
+                throw new Exception("Invalid sequence");
+            }
+
+            //we have a non-terminal at the top of the parsing stack
+            Pair<Integer, List<String>> matchingProductionPair = ll1Table.get(stackTopElement).get(firstSeqElement).get(0);
+
+            List<String> matchingProduction = matchingProductionPair.getValue();
+
+            output.add(matchingProductionPair.getKey());
+
+            //We add the productions in reverse order because we have a stack
+            for (int i = matchingProduction.size() - 1; i >= 0; i--) {
+                parsingStack.push(matchingProduction.get(i));
+            }
+        }
+        throw new Exception("Invalid sequence");
     }
 }
