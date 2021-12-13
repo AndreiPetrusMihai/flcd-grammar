@@ -10,26 +10,32 @@ public class Grammar {
 
     List<String> terminals;
     List<String> nonTerminals;
-    List<String> operators = new ArrayList<>(List.of("/", "*", "+", "-", "<=", "==", "!=", ">=", "="));
+    List<String> operators = new ArrayList<>(List.of("/", "*", "+", "-", "<", ">", "<=", "==", "!=", ">=", "="));
     List<String> separators = new ArrayList<>(List.of("(", ")", "{", "}", ";", "###"));
     List<String> reservedWords = new ArrayList<>(List.of("array", "if", "else", "while", "for", "read", "write", "int", "char", "string", "float"));
 
     String EPS = "eps";
 
-    HashMap<String, List<List<String>>> productions = new HashMap<>();
+    LinkedHashMap<String, List<Pair<Integer,List<String>>>> productions = new LinkedHashMap<>();
 
-    HashMap<String, List<List<String>>> firstTable = new HashMap<>();
+    LinkedHashMap<String, List<List<String>>> firstTable = new LinkedHashMap<>();
+    LinkedHashMap<String, List<String>> lastFirstIteration = new LinkedHashMap<>();
 
-    HashMap<String,List<List<String>>> followTable = new HashMap<>();
+    LinkedHashMap<String,List<List<String>>> followTable = new LinkedHashMap<>();
+    LinkedHashMap<String,List<String>> lastFollowIteration = new LinkedHashMap<>();
+    LinkedHashMap<String, LinkedHashMap<String, List<Pair<Integer,List<String>>>>> ll1Table = new LinkedHashMap<>();
+
 
     String filePath;
 
-    public Grammar(String filePath) {
+    public Grammar(String filePath, boolean interactiveMode) {
         this.filePath = filePath;
         init();
         generateFIRST();
-        generateFOLLOW();
-        start();
+        generateFollow();
+        generateLL1();
+        if (interactiveMode)
+            start();
     }
 
     private void printOptions() {
@@ -39,16 +45,17 @@ public class Grammar {
         System.out.println("3.Set of productions");
         System.out.println("4.Productions for a non-terminal");
         System.out.println("5.First iteration for non-terminals");
+        System.out.println("6.Print LL1 table");
 
     }
 
     private void printProductions() {
         for (String nonTerminal : productions.keySet()) {
-            List<List<String>> particularProductions = productions.get(nonTerminal);
+            List<Pair<Integer,List<String>>> particularProductions = productions.get(nonTerminal);
             System.out.println("Non-Terminal: " + nonTerminal);
             if (particularProductions != null) {
-                for (List<String> production : particularProductions) {
-                    System.out.println(production.toString());
+                for (Pair<Integer,List<String>> production : particularProductions) {
+                    System.out.println(production.getValue());
                 }
             }
         }
@@ -70,11 +77,11 @@ public class Grammar {
         System.out.println("Provide the non terminal we should check for: ");
         String userProduction = scanner.nextLine();
 
-        List<List<String>> particularProductions = productions.get(userProduction);
+        List<Pair<Integer,List<String>>> particularProductions = productions.get(userProduction);
 
         if (particularProductions != null) {
-            for (List<String> production : particularProductions) {
-                System.out.println(production.toString());
+            for (Pair<Integer,List<String>> production : particularProductions) {
+                System.out.println(production.getValue().toString());
             }
         }
     }
@@ -99,10 +106,26 @@ public class Grammar {
                 case 3 -> printProductions();
                 case 4 -> askForAndPrintProductionsForTerminal(scanner);
                 case 5 -> askForIterationAndPrintFirstContent(scanner);
+                case 6 -> printLL1Table();
+
                 default -> System.out.println("Option doesn't match a command.");
             }
             System.out.println();
             if (shouldStop) break;
+        }
+    }
+
+    private void printLL1Table(){
+        for(String k1: ll1Table.keySet()){
+            for(String k2: ll1Table.get(k1).keySet()){
+                List<Pair<Integer,List<String>>> tableValues = ll1Table.get(k1).get(k2);
+                if(tableValues.size() > 0){
+                    System.out.println(k1 + " " + k2 + ":");
+                    for(Pair<Integer,List<String>> entry : tableValues){
+                        System.out.println(entry.getKey() + ": " + entry.getValue().toString());
+                    }
+                }
+            }
         }
     }
 
@@ -161,7 +184,7 @@ public class Grammar {
 
             String nonTerminalsLine = scanner.nextLine();
             this.nonTerminals = Arrays.stream(nonTerminalsLine.split(",")).toList();
-
+            Integer productionIndex = 0;
             while (scanner.hasNextLine()) {
                 String production = scanner.nextLine();
 
@@ -179,13 +202,15 @@ public class Grammar {
                 //If the nonTerminal var starts with a lowercase letter or productionNonTerminalsList
                 //has a length other than one, we know for sure that we don't have a context-free grammar
                 for (String nonTerminal : productionNonTerminalsList) {
-                    List<List<String>> existingProductions = productions.get(nonTerminal);
+                    productionIndex++;
+                    List<Pair<Integer,List<String>>> existingProductions = productions.get(nonTerminal);
                     //Here we discompose every production results in order to know the members
                     //Ex a S b | b b A will result in the following: [[a,S,b],[b,b,A]]
-                    List<List<String>> processedProduction = productionResultsList.stream().map((prodRes) -> Arrays.stream(prodRes.split(" ")).toList().stream().map(String::trim).toList()).toList();
+                    Integer finalProductionIndex = productionIndex;
+                    List<Pair<Integer,List<String>>> processedProduction = productionResultsList.stream().map((prodRes) -> new Pair<>(finalProductionIndex,Arrays.stream(prodRes.split(" ")).toList().stream().map(String::trim).toList())).toList();
                     if (existingProductions != null) {
                         //Merging the lists needs to be done like this because of the immutability.
-                        List<List<String>> newProductionsList = new ArrayList<>();
+                        List<Pair<Integer,List<String>>> newProductionsList = new ArrayList<>();
                         newProductionsList.addAll(existingProductions);
 
                         newProductionsList.addAll(processedProduction);
@@ -203,145 +228,74 @@ public class Grammar {
     }
 
     private void initFirstTable() {
-        firstTable = new HashMap<>();
+        firstTable = new LinkedHashMap<>();
         for (String nonTerminal : nonTerminals) {
             firstTable.put(nonTerminal, new ArrayList<>());
         }
     }
 
     private void initFollowTable(){
-        followTable = new HashMap<>();
-        for(var key : this.firstTable.keySet()) {
-            followTable.put(key, new ArrayList<>());
-        }
+        followTable = new LinkedHashMap<>();
+        for(String nonTerminal : nonTerminals)
+            followTable.put(nonTerminal,new ArrayList<>());
     }
 
-
-    private void initNewFirstIteration(int iterationNumber) {
+    private void initNewFirstIteration() {
         for (String nonTerminal : nonTerminals) {
             List<List<String>> currentList = firstTable.get(nonTerminal);
             currentList.add(new ArrayList<>());
         }
     }
-    private void generateFOLLOW(){
-        try{
-            this.initFollowTable();
-            Scanner reader = new Scanner(new File(this.filePath));
-            String line = reader.nextLine();
-            line = reader.nextLine();
+
+    private void saveLastFIRSTIteration() {
+        int iterationCount = firstTable.get(nonTerminals.get(0)).size();
+        for (String key : firstTable.keySet()) {
+            lastFirstIteration.put(key, new ArrayList<>(firstTable.get(key).get(iterationCount - 1)));
+        }
+    }
+
+    private void generateFollow() {
+        try {
+            initFollowTable();
+            File file = new File(filePath);
+            Scanner reader = new Scanner(file);
+            reader.nextLine();
+            reader.nextLine();
             while(reader.hasNextLine()){
-                line = reader.nextLine();
-                List<String> values = List.of(line.split(":"));
-                List<String> fileInput= List.of(values.get(1).split(","));
-                if(fileInput.size() == 1 ) {
-                    if (this.nonTerminals.contains(fileInput.get(0)))
-//                        this.followTable.get(fileInput.get(0)).add(this.firstTable.get(fileInput.get(0)))0
-                        this.followTable.put(fileInput.get(0), this.firstTable.get(values.get(0)));
-                    else {
-                        this.followTable.put(fileInput.get(0), List.of(values));
-                    }
-                }
-                else{
-                    for(int i = 1; i< fileInput.size(); i++){
-                        if(this.nonTerminals.contains(fileInput.get(i))){
-                            this.followTable.put(fileInput.get(i),this.firstTable.get(fileInput.get(i)));
+                var currentLine = reader.nextLine();
+                var rightData = currentLine.split(":")[1];
+                List<String> productionResultsList = Arrays.stream(rightData.split("\\|")).map(String::trim).toList();
+                for(int i = 0 ; i < productionResultsList.size(); i++)
+                {
+                    var data = productionResultsList.get(i).split(" ");
+                    for (int j = 0; j < data.length; j++) {
+                        if(data[j].charAt(0) == '\''){
+                            var trimmed = data[j].substring(1,data[j].length()-1);
+//                            System.out.println(trimmed);
+                                if(!this.terminals.contains(trimmed))
+                                    if(data.length>1 && j+1<data.length)
+                                        if(this.terminals.contains(data[j+1]))
+                                            this.followTable.get(data[j]).get(0).add(data[j+1]);
+                                        else
+                                            this.followTable.put(data[j],firstTable.get(data[j]));
                         }
                         else{
-                            if(this.nonTerminals.contains(fileInput.get(i-1))){
-                                this.followTable.put(fileInput.get(i-1),List.of(List.of(fileInput.get(0))));
-                            }
+                            if(!this.terminals.contains(data[j]))
+                                if(data.length>1 && j+1<data.length)
+                                    if(this.terminals.contains(data[j+1]))
+                                        this.followTable.get(data[j]).get(0).add(data[j+1]);
+                                    else
+                                        this.followTable.put(data[j],firstTable.get(data[j]));
                         }
-
                     }
                 }
-
             }
-        }catch(FileNotFoundException e){
+        }catch(Exception e){
             e.printStackTrace();
         }
-        System.out.println(this.followTable.toString());
+        for(var x : this.nonTerminals)
+            System.out.println(x + "->" +followTable.get(x));
     }
-//    private void generateFOLLOW(){
-//        initFollowTable();
-////        try{
-////            for(var p : this.productions.values())
-////                System.out.println(p);
-//////            Scanner reader = new Scanner(new File(this.filePath));
-//////            String line;
-//////            line = reader.nextLine();
-//////            line = reader.nextLine();
-//////            while( reader.hasNextLine()) {
-//////                line = reader.nextLine();
-////////                System.out.println(line);
-//////                var initialSplit = line.split(":");
-//////                System.out.println(initialSplit[1]);
-//////                var secondSplit = initialSplit[1].split("\\|");
-////////                System.out.println(Arrays.toString(secondSplit));
-//////                for (var value : secondSplit) {
-////////                    System.out.println(Arrays.toString(value.split(" ")));
-//////                    var x = (value.split(" "));
-////////                    for (var value2 : (value.split(" "))){
-//////                        int i = 0;
-////////                        System.out.println(value2);
-//////                    if (!(value.charAt(0) == '\'')) {
-////////                        System.out.println(value);
-//////                        int j = i;
-//////                        boolean checker = false;
-//////                        while (this.nonTerminals.contains(secondSplit[j])) {
-//////                            j++;
-//////                            if (!this.nonTerminals.contains(secondSplit[j]))
-//////                                checker = true;
-//////                        }
-//////                        if (checker)
-//////                            this.followTable.get(secondSplit[j - 1]).get(0).add(secondSplit[j]);
-//////
-//////
-//////                    }
-//////                }
-//////            }
-//////            }
-////        }catch(Exception e){
-////            e.printStackTrace();
-////        }
-////        System.out.println(this.followTable);
-//        try{
-//            Scanner reader = new Scanner(new File(this.filePath));
-//            String line = reader.nextLine();
-//            line = reader.nextLine();
-//            while(reader.hasNextLine()){
-//                line = reader.nextLine();
-//                List<String> values = List.of(line.split(":"));
-//                List<String> fileInput= List.of(values.get(1).split(","));
-//                if(fileInput.size() == 1 ) {
-//                    if (this.nonTerminals.contains(fileInput.get(0)))
-////                        this.followTable.get(fileInput.get(0)).add(this.firstTable.get(fileInput.get(0)))0
-//                        this.followTable.put(fileInput.get(0), this.firstTable.get(values.get(0)));
-//                    else {
-//                        if(this.firstTable.containsKey(fileInput.get(0)))
-//                        this.followTable.put(fileInput.get(0), List.of(values));
-//                    }
-//                }
-//                else{
-//                    for(int i = 1; i< fileInput.size(); i++){
-//                        if(this.nonTerminals.contains(fileInput.get(i))){
-//                            this.followTable.put(fileInput.get(i),this.firstTable.get(fileInput.get(i)));
-//                        }
-//                        else{
-//                            if(this.nonTerminals.contains(fileInput.get(i-1))){
-//                                this.followTable.put(fileInput.get(i-1),List.of(List.of(fileInput.get(0))));
-//                            }
-//                        }
-//
-//                    }
-//                }
-//
-//            }
-//        }catch(FileNotFoundException e){
-//            e.printStackTrace();
-//        }
-//        System.out.println(this.followTable.toString());
-//    }
-
 
     private void generateFIRST() {
         initFirstTable();
@@ -350,25 +304,25 @@ public class Grammar {
 
         while (differencesFound) {
             differencesFound = false;
-            initNewFirstIteration(currentIteration);
+            initNewFirstIteration();
             for (String nonTerminal : productions.keySet()) {
 
                 List<String> newFirstList = firstTable.get(nonTerminal).get(currentIteration);
+
+                //We initialize it with the last iteration values.
                 if (currentIteration > 0) {
                     newFirstList.addAll(new ArrayList<>(firstTable.get(nonTerminal)
                             .get(currentIteration - 1)));
                 }
 
-                for (List<String> production : productions.get(nonTerminal)) {
+                for (Pair<Integer,List<String>> production : productions.get(nonTerminal)) {
 
-                    String firstProductionElement = production.get(0);
-
-                    //We init it with the last iteration values.
+                    String firstProductionElement = production.getValue().get(0);
 
                     if (firstProductionElement.charAt(0) == '\'') {
                         //This means the production starts with a non-terminal.
                         String strippedTerminal = firstProductionElement.substring(1, firstProductionElement.length() - 1);
-                        //Remove the ""
+                        //Remove the ''
                         if (!newFirstList.contains(strippedTerminal)) {
                             //If it doesn't contain it, we don't add it.
                             newFirstList.add(strippedTerminal);
@@ -377,17 +331,29 @@ public class Grammar {
                     } else {
                         if (firstProductionElement.equals(EPS)) {
                             if (!newFirstList.contains(EPS)) {
-                                //If it doesn't contain it, we don't add it.
+                                //If it contains it, we don't add it.
                                 newFirstList.add(EPS);
                                 differencesFound = true;
                             }
                         } else {
                             //This means the production starts with a terminal.
                             if (currentIteration > 0) {
-                                for (String firstValue : firstTable.get(firstProductionElement).get(currentIteration - 1)) {
-                                    if (!newFirstList.contains(firstValue)) {
-                                        newFirstList.add(firstValue);
-                                        differencesFound = true;
+                                int productionElementIndex = 0;
+                                boolean keepGoing = true;
+                                String productionElement;
+                                while(productionElementIndex < production.getValue().size() && keepGoing){
+                                    productionElement = production.getValue().get(productionElementIndex);
+
+                                    keepGoing = false;
+                                    for (String firstValue : firstTable.get(productionElement).get(currentIteration - 1)) {
+                                        if (!newFirstList.contains(firstValue)) {
+                                            newFirstList.add(firstValue);
+                                            differencesFound = true;
+                                        }
+                                        if(firstValue.equals("eps")){
+                                            keepGoing = true;
+                                            productionElementIndex++;
+                                        }
                                     }
                                 }
                             }
@@ -396,6 +362,27 @@ public class Grammar {
                 }
             }
             currentIteration++;
+        }
+
+        saveLastFIRSTIteration();
+        generateMockFollow();
+    }
+
+    private void generateMockFollow(){
+        for(String nonTerminal : nonTerminals){
+            ArrayList<String> values = new ArrayList<>();
+            switch (nonTerminal) {
+                case "s", "b" -> {
+                    values.add("eps");
+                    values.add(")");
+                }
+                case "a", "c" -> {
+                    values.add("+");
+                    values.add("eps");
+                    values.add(")");
+                }
+            }
+            lastFollowIteration.put(nonTerminal, values);
         }
     }
 
@@ -407,5 +394,63 @@ public class Grammar {
             }
             System.out.println("}");
         }
+    }
+
+    private void initLL1Table() {
+        ll1Table = new LinkedHashMap<>();
+        for (String nonTerminal : nonTerminals) {
+            LinkedHashMap<String, List<Pair<Integer,List<String>>>> terminalMap = new LinkedHashMap<>();
+            for (String terminal : terminals) {
+                terminalMap.put(terminal, new ArrayList<>());
+            }
+            terminalMap.put("$", new ArrayList<>());
+            ll1Table.put(nonTerminal, terminalMap);
+        }
+        for (String terminal : terminals) {
+            LinkedHashMap<String, List<Pair<Integer,List<String>>>> terminalMap = new LinkedHashMap<>();
+            for (String subTerminal : terminals) {
+                terminalMap.put(subTerminal, new ArrayList<>());
+            }
+            terminalMap.put("$", new ArrayList<>());
+            ll1Table.put(terminal, terminalMap);
+        }
+        LinkedHashMap<String, List<Pair<Integer,List<String>>>> terminalMap = new LinkedHashMap<>();
+        terminalMap.put("$", new ArrayList<>());
+        ll1Table.put("$", terminalMap);
+    }
+
+    private void generateLL1() {
+        initLL1Table();
+//        System.out.println(ll1Table.keySet().toString());
+
+        for (String key : productions.keySet()) {
+            for (Pair<Integer,List<String>> production : productions.get(key)) {
+                String firstElement = production.getValue().get(0);
+                if (firstElement.charAt(0) == '\'') {
+                    //This means it's starting with a terminal. We also strip them of ''.
+                    ll1Table.get(key).get(firstElement.substring(1,firstElement.length()-1)).add(production);
+                } else if (firstElement.equals("eps")) {
+                    //This means it's resulting in epsilon
+                    for(String value : lastFollowIteration.get(key)){
+                        //If the value is epsilon, we add it to the dollar column
+                        if(value.equals("eps")){
+                            ll1Table.get(key).get("$").add(production);
+                        } else {
+                            ll1Table.get(key).get(value).add(production);
+                        }
+                    }
+                } else {
+                    //This means it's starting with a non-terminal
+                    for (String value : lastFirstIteration.get(firstElement)) {
+                        ll1Table.get(key).get(value).add(production);
+                    }
+                }
+            }
+        }
+    }
+
+
+    public void parseSequence(List<String> sequence){
+
     }
 }
