@@ -1,23 +1,10 @@
 import grammar.Grammar;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
-
 public class Main {
     public static void main(String[] args) {
         String filePath = "g3.txt";
-        Grammar grammar = new Grammar(filePath, true);
-        try{
-            List<String> inputSeq = new ArrayList<>(List.of("(","int",")","+","int"));
-            Stack<String> startStack = new Stack<>();
-            startStack.push("$");
-            startStack.push("s");
-            List<Integer> res = grammar.parseSequence(inputSeq, startStack);
-            System.out.println(res);
-        } catch(Exception ex){
-            System.out.println("Invalid seq");
-        }
-
+        String outPath = "g3.out";
+        String seqPath = "g3seq.txt";
+        new Grammar(filePath,seqPath,outPath, true);
     }
 }

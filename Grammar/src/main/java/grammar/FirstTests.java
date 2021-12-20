@@ -15,7 +15,7 @@ public class FirstTests {
     @Test
     public void firstTableIteration2_g1txtFile_correctOutput() {
         String filePath = "g1test.txt";
-        Grammar testGrammar = new Grammar(filePath, false);
+        Grammar testGrammar = new Grammar(filePath,null,"g1test.out", false);
 
         HashMap<String, List<List<String>>> firstTable = testGrammar.firstTable;
 
@@ -45,7 +45,7 @@ public class FirstTests {
     @Test
     public void firstTableIteration1_g1txtFile_correctOutput() {
         String filePath = "g1test.txt";
-        Grammar testGrammar = new Grammar(filePath, false);
+        Grammar testGrammar = new Grammar(filePath,null,"g1test.out", false);
 
         HashMap<String, List<List<String>>> firstTable = testGrammar.firstTable;
 
@@ -76,7 +76,7 @@ public class FirstTests {
     @Test
     public void firstTableIteration0_g1txtFile_correctOutput() {
         String filePath = "g1test.txt";
-        Grammar testGrammar = new Grammar(filePath, false);
+        Grammar testGrammar = new Grammar(filePath,null,"g1test.out", false);
 
         HashMap<String, List<List<String>>> firstTable = testGrammar.firstTable;
 

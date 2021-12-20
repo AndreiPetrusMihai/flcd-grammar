@@ -14,6 +14,8 @@ public class Grammar {
     List<String> separators = new ArrayList<>(List.of("(", ")", "{", "}", ";", "###"));
     List<String> reservedWords = new ArrayList<>(List.of("array", "if", "else", "while", "for", "read", "write", "int", "char", "string", "float"));
 
+    List<String> inputSeq = new ArrayList<>(List.of("(", "int", ")", "+", "int"));
+
     String EPS = "eps";
 
     LinkedHashMap<String, List<Pair<Integer, List<String>>>> productions = new LinkedHashMap<>();
@@ -24,16 +26,43 @@ public class Grammar {
     LinkedHashMap<String, List<String>> lastFollowIteration = new LinkedHashMap<>();
     LinkedHashMap<String, LinkedHashMap<String, List<Pair<Integer, List<String>>>>> ll1Table = new LinkedHashMap<>();
 
+    ParserOutput parserOutput;
 
     String filePath;
+    String outputPath;
+    String seqPath;
 
-    public Grammar(String filePath, boolean interactiveMode) {
+    public Grammar(String filePath,String seqPath, String outputPath, boolean interactiveMode) {
         this.filePath = filePath;
+        this.outputPath = outputPath;
+        parserOutput = new ParserOutput(outputPath);
         init();
+
+        if(seqPath != null){
+            this.seqPath = seqPath;
+            initSeq();
+        }
+
         generateFIRST();
         generateLL1();
         if (interactiveMode)
             start();
+    }
+
+    private void initSeq() {
+        java.util.Scanner scanner;
+
+        File file = new File(seqPath);
+        List<String> readInputSeq = new ArrayList<>();
+        try {
+            scanner = new java.util.Scanner(file);
+            while (scanner.hasNextLine()) {
+                readInputSeq.add(scanner.nextLine());
+            }
+            inputSeq = readInputSeq;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     private void printOptions() {
@@ -44,7 +73,17 @@ public class Grammar {
         System.out.println("4.Productions for a non-terminal");
         System.out.println("5.First iteration for non-terminals");
         System.out.println("6.Print LL1 table");
+        System.out.println("7.Verify sequence");
+        System.out.println("8.Print productions string");
+        System.out.println("9.Save productions string to file");
+    }
 
+    private void saveProductionsString() {
+        parserOutput.saveProductionsStringToFile();
+    }
+
+    private void printProductionsString() {
+        parserOutput.printProductionsString();
     }
 
     private void printProductions() {
@@ -105,7 +144,9 @@ public class Grammar {
                 case 4 -> askForAndPrintProductionsForTerminal(scanner);
                 case 5 -> askForIterationAndPrintFirstContent(scanner);
                 case 6 -> printLL1Table();
-
+                case 7 -> verifySequence();
+                case 8 -> printProductionsString();
+                case 9 -> saveProductionsString();
                 default -> System.out.println("Option doesn't match a command.");
             }
             System.out.println();
@@ -318,7 +359,7 @@ public class Grammar {
     }
 
     private void generateMockFollow() {
-        if(this.filePath == "g1.txt"){
+        if (this.filePath == "g1.txt") {
             for (String nonTerminal : nonTerminals) {
                 ArrayList<String> values = new ArrayList<>();
                 switch (nonTerminal) {
@@ -335,7 +376,7 @@ public class Grammar {
                 lastFollowIteration.put(nonTerminal, values);
             }
         }
-        if(this.filePath == "g3.txt"){
+        if (this.filePath == "g3.txt") {
             for (String nonTerminal : nonTerminals) {
                 ArrayList<String> values = new ArrayList<>();
                 switch (nonTerminal) {
@@ -424,13 +465,20 @@ public class Grammar {
         }
     }
 
+    public void verifySequence() {
+        Stack<String> startStack = new Stack<>();
+        startStack.push("$");
+        startStack.push("s");
 
-    private boolean isTerminal(String candidate) {
-        return terminals.stream().anyMatch((s) -> s.equals(candidate));
+        try {
+            parseSequence(inputSeq, startStack);
+        } catch (Exception ex) {
+            System.out.println("Invalid seq");
+        }
+
     }
 
-
-    public List<Integer> parseSequence(List<String> sequence, Stack<String> startStack) throws Exception {
+    private void parseSequence(List<String> sequence, Stack<String> startStack) throws Exception {
 
         sequence.add("$");
         Stack<String> parsingStack = startStack;
@@ -445,8 +493,11 @@ public class Grammar {
             if (stackTopElement.equals(EPS))
                 continue;
 
-            if (firstSeqElement.equals("$") && stackTopElement.equals("$"))
-                return output;
+            if (firstSeqElement.equals("$") && stackTopElement.equals("$")){
+                this.parserOutput.setProductionsString(output);
+                return;
+            }
+
 
             if (stackTopElement.charAt(0) == '\'') {
                 //We have a terminal on the parsing stack;
@@ -458,6 +509,10 @@ public class Grammar {
             }
 
             //we have a non-terminal at the top of the parsing stack
+            if (ll1Table.get(stackTopElement).get(firstSeqElement).size() > 1) {
+                throw new Exception("Conflict for " + stackTopElement + ", " + firstSeqElement + ".");
+            }
+
             Pair<Integer, List<String>> matchingProductionPair = ll1Table.get(stackTopElement).get(firstSeqElement).get(0);
 
             List<String> matchingProduction = matchingProductionPair.getValue();
