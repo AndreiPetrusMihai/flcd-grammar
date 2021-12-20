@@ -6,8 +6,8 @@ import java.util.Stack;
 
 public class Main {
     public static void main(String[] args) {
-        String filePath = "g1.txt";
-        Grammar grammar = new Grammar(filePath, false);
+        String filePath = "g3.txt";
+        Grammar grammar = new Grammar(filePath, true);
         try{
             List<String> inputSeq = new ArrayList<>(List.of("(","int",")","+","int"));
             Stack<String> startStack = new Stack<>();

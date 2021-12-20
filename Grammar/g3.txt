@@ -1,0 +1,10 @@
++,*,(,),a
+s,a,b,c,d
+s: b a
+a: '+' b a
+a: eps
+b: d c
+c: '*' d c
+c: eps
+d: '(' s ')'
+d: 'a'

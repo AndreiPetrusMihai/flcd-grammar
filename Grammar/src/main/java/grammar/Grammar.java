@@ -318,21 +318,47 @@ public class Grammar {
     }
 
     private void generateMockFollow() {
-        for (String nonTerminal : nonTerminals) {
-            ArrayList<String> values = new ArrayList<>();
-            switch (nonTerminal) {
-                case "s", "b" -> {
-                    values.add("eps");
-                    values.add(")");
+        if(this.filePath == "g1.txt"){
+            for (String nonTerminal : nonTerminals) {
+                ArrayList<String> values = new ArrayList<>();
+                switch (nonTerminal) {
+                    case "s", "b" -> {
+                        values.add("eps");
+                        values.add(")");
+                    }
+                    case "a", "c" -> {
+                        values.add("+");
+                        values.add("eps");
+                        values.add(")");
+                    }
                 }
-                case "a", "c" -> {
-                    values.add("+");
-                    values.add("eps");
-                    values.add(")");
-                }
+                lastFollowIteration.put(nonTerminal, values);
             }
-            lastFollowIteration.put(nonTerminal, values);
         }
+        if(this.filePath == "g3.txt"){
+            for (String nonTerminal : nonTerminals) {
+                ArrayList<String> values = new ArrayList<>();
+                switch (nonTerminal) {
+                    case "s", "a" -> {
+                        values.add("eps");
+                        values.add(")");
+                    }
+                    case "b", "c" -> {
+                        values.add("+");
+                        values.add("eps");
+                        values.add(")");
+                    }
+                    case "d" -> {
+                        values.add("*");
+                        values.add("+");
+                        values.add("eps");
+                        values.add(")");
+                    }
+                }
+                lastFollowIteration.put(nonTerminal, values);
+            }
+        }
+
     }
 
     private void printFIRSTIteration(int iterationToPrint) {
